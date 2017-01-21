@@ -42,6 +42,7 @@ class PhotosCollectionViewController: UIViewController,MKMapViewDelegate,NSFetch
             // Create the FetchedResultsController
             fetchResultsController = NSFetchedResultsController(fetchRequest: fr, managedObjectContext: stack.context, sectionNameKeyPath: nil, cacheName: nil)
             executeSearch()
+            setPhotosArray()
         }
     }
     
@@ -65,6 +66,11 @@ class PhotosCollectionViewController: UIViewController,MKMapViewDelegate,NSFetch
         setUpFlowLayout()
     }
     
+    func setPhotosArray(){
+        let fetchedObjects = self.fetchResultsController?.fetchedObjects as! [Photo]
+        print(fetchedObjects.count)
+        photoCollectionView.reloadData()
+    }
     
     func getFetchResults(){
         let fr = NSFetchRequest<NSFetchRequestResult>(entityName: "Photo")
@@ -132,10 +138,10 @@ class PhotosCollectionViewController: UIViewController,MKMapViewDelegate,NSFetch
     
     @IBAction func newCollectionPressed(_ sender: Any) {
         self.deleteAllImages()
-        var flag = 0
+        var flag = 1
         
         if count == 1{
-            flag = 1
+            flag = 2
             count += 1
         }
         else{
@@ -223,6 +229,7 @@ class PhotosCollectionViewController: UIViewController,MKMapViewDelegate,NSFetch
         
         cell.imageName = cellPhoto.name
         cell.loadingView.startAnimating()
+        cell.loadingView.isHidden = false
         if cellPhoto.imageData == nil{
           if cellPhoto.urlString != nil{
             Flickr.shareInstance().downloadImageFromImageURL(imagePath: cellPhoto.urlString!){(success,data,error) in
@@ -235,6 +242,7 @@ class PhotosCollectionViewController: UIViewController,MKMapViewDelegate,NSFetch
                 else{
                     cell.imageView.image = UIImage(data: data!)
                     cell.loadingView.stopAnimating()
+                    cell.loadingView.isHidden = true
                     cellPhoto.imageData = data as NSData?
                     self.stack.save()
                 }
@@ -248,6 +256,7 @@ class PhotosCollectionViewController: UIViewController,MKMapViewDelegate,NSFetch
         else{
             cell.imageView.image = UIImage(data: cellPhoto.imageData as! Data)
             cell.loadingView.stopAnimating()
+            cell.loadingView.isHidden = true
         }
         
 //        DispatchQueue.main.async {

@@ -58,7 +58,7 @@
                   moduleName = "VirtualTouristApp"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/harika/Desktop/VirtualTouristApp/VirtualTouristApp/MapViewController.swift"
-                  timestampString = "506710829.360968"
+                  timestampString = "506711941.276838"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
                   startingLineNumber = "170"
@@ -73,7 +73,7 @@
                   moduleName = "VirtualTouristApp"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/harika/Desktop/VirtualTouristApp/VirtualTouristApp/MapViewController.swift"
-                  timestampString = "506710829.362568"
+                  timestampString = "506711941.280513"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
                   startingLineNumber = "170"
@@ -122,7 +122,7 @@
                   moduleName = "VirtualTouristApp"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/harika/Desktop/VirtualTouristApp/VirtualTouristApp/MapViewController.swift"
-                  timestampString = "506710829.369632"
+                  timestampString = "506711941.290934"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
                   startingLineNumber = "84"
@@ -137,7 +137,7 @@
                   moduleName = "VirtualTouristApp"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/harika/Desktop/VirtualTouristApp/VirtualTouristApp/MapViewController.swift"
-                  timestampString = "506710829.371508"
+                  timestampString = "506711941.292881"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
                   startingLineNumber = "86"
@@ -170,28 +170,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "VirtualTouristApp/PhotosCollectionViewController.swift"
-            timestampString = "506710829.198428"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "252"
-            endingLineNumber = "252"
-            landmarkName = "configureCell(cell:atIndexPath:)"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "VirtualTouristApp/PhotosCollectionViewController.swift"
-            timestampString = "506710829.198428"
+            timestampString = "506712931.452705"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "258"
             endingLineNumber = "258"
-            landmarkName = "deleteAllImages()"
+            landmarkName = "configureCell(cell:atIndexPath:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -257,6 +241,54 @@
             endingLineNumber = "185"
             landmarkName = "mapView(_:didSelect:)"
             landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "VirtualTouristApp/PhotosCollectionViewController.swift"
+            timestampString = "506712931.452705"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "151"
+            endingLineNumber = "151"
+            landmarkName = "newCollectionPressed(_:)"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "VirtualTouristApp.PhotosCollectionViewController.newCollectionPressed (Any) -&gt; ()"
+                  moduleName = "VirtualTouristApp"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/harika/Desktop/VirtualTouristApp/VirtualTouristApp/PhotosCollectionViewController.swift"
+                  timestampString = "506711941.316844"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "145"
+                  endingLineNumber = "145"
+                  offsetFromSymbolStart = "311">
+               </Location>
+               <Location
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "VirtualTouristApp.PhotosCollectionViewController.(newCollectionPressed (Any) -&gt; ()).(closure #1)"
+                  moduleName = "VirtualTouristApp"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/harika/Desktop/VirtualTouristApp/VirtualTouristApp/PhotosCollectionViewController.swift"
+                  timestampString = "506711941.318702"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "147"
+                  endingLineNumber = "147"
+                  offsetFromSymbolStart = "30">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>
