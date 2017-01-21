@@ -20,7 +20,7 @@ struct CoreDataStack {
     internal let persistingContext: NSManagedObjectContext
     internal let backgroundContext: NSManagedObjectContext
     let context: NSManagedObjectContext
-    
+        
     // MARK: Initializers
     
     init?(modelName: String) {
@@ -135,7 +135,7 @@ extension CoreDataStack {
                     fatalError("Error while saving main context: \(error)")
                 }
                 
-                // now we save in the background
+//                // now we save in the background
                 self.persistingContext.perform() {
                     do {
                         try self.persistingContext.save()

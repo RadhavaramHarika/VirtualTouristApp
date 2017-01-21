@@ -16,21 +16,31 @@ class PhotosCollectionViewController: UIViewController,MKMapViewDelegate,NSFetch
     @IBOutlet weak var bottomToolBar: UIToolbar!
     @IBOutlet weak var photoCollectionView: UICollectionView!
     @IBOutlet weak var photoCollectionViewFlowLayout: UICollectionViewFlowLayout!
-    var location:Location!
+    var location: Location!
     var placeName:String!
     @IBOutlet weak var mapView: MKMapView!
     let stack = (UIApplication.shared.delegate as! AppDelegate).stack
     let alert = AlertViewController()
+    var count = Int()
     
-    var insertedPaths: [IndexPath]!
-    var deletedPaths: [IndexPath]!
-    var updatedPaths: [IndexPath]!
+    var reloadCollectionView: Bool = true
+    
+    var blockOperations: [BlockOperation] = []
+    
+    var photosArray: [Photo]!
+//    var insertedPaths: [IndexPath]!
+//    var deletedPaths: [IndexPath]!
+//    var updatedPaths: [IndexPath]!
     var selectedIndices = [IndexPath]()
     
-    var fetchedResultsController : NSFetchedResultsController<NSFetchRequestResult>? {
+    var fetchResultsController : NSFetchedResultsController<NSFetchRequestResult>? {
         didSet {
-            // Whenever the frc changes, we execute the search and
-            fetchedResultsController?.delegate = self
+            fetchResultsController?.delegate = self
+            let fr = NSFetchRequest<NSFetchRequestResult>(entityName: "Photo")
+            fr.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true),NSSortDescriptor(key: "urlString", ascending: false)]
+            
+            // Create the FetchedResultsController
+            fetchResultsController = NSFetchedResultsController(fetchRequest: fr, managedObjectContext: stack.context, sectionNameKeyPath: nil, cacheName: nil)
             executeSearch()
         }
     }
@@ -40,39 +50,27 @@ class PhotosCollectionViewController: UIViewController,MKMapViewDelegate,NSFetch
         
         photoCollectionView.delegate = self
         photoCollectionView.dataSource = self
-        self.mapView.delegate = self
-        photoCollectionView.reloadData()
+        mapView.delegate = self
         
-        self.fetchedResultsController?.delegate = self
+        self.fetchResultsController?.delegate = self
         self.navigationController?.navigationBar.isHidden = false
         self.view.bringSubview(toFront: bottomToolBar)
         
-        self.setUpMapView()
-        self.setUpFlowLayout()
+        let fr = NSFetchRequest<NSFetchRequestResult>(entityName: "Photo")
+        fr.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true),NSSortDescriptor(key: "urlString", ascending: false)]
+        //Create the FetchedResultsController
+        fetchResultsController = NSFetchedResultsController(fetchRequest: fr, managedObjectContext: stack.context, sectionNameKeyPath: nil, cacheName: nil)
+        
+        setUpMapView()
+        setUpFlowLayout()
     }
     
-    func getImages(){
-        Flickr.shareInstance().getImageData(selectedLocation: location){(success,error)in
-        
-            if success{
-                print("Successfully downloaded imageData")
-            }
-            else{
-                print("Could not download image data")
-                print(error)
-            }
-        }
-    }
     
     func getFetchResults(){
         let fr = NSFetchRequest<NSFetchRequestResult>(entityName: "Photo")
-        fr.sortDescriptors = [NSSortDescriptor(key: "name", ascending: false),NSSortDescriptor(key: "urlString", ascending: true),NSSortDescriptor(key: "imageData", ascending: true)]
-        print(self.location)
-        let predicate = NSPredicate(format: "location: %@", argumentArray: [location])
-        fr.predicate = predicate
-        
+        fr.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true),NSSortDescriptor(key: "urlString", ascending: true),NSSortDescriptor(key: "imageData", ascending: true)]
         //         Create the FetchedResultsController
-        self.fetchedResultsController = NSFetchedResultsController(fetchRequest: fr, managedObjectContext: stack.context, sectionNameKeyPath: nil, cacheName: nil)
+        fetchResultsController = NSFetchedResultsController(fetchRequest: fr, managedObjectContext: stack.context, sectionNameKeyPath: nil, cacheName: nil)
     }
     
     func setUpMapView(){
@@ -85,7 +83,6 @@ class PhotosCollectionViewController: UIViewController,MKMapViewDelegate,NSFetch
             if error != nil
             {
                 DispatchQueue.main.async {
-                    //                    loading.stopAnimating()
                     self.alert.displayAlertView(viewController: self, alertTitle: "Geocode Error", alertMessage: (error?.localizedDescription)!)
                 }
             }
@@ -120,14 +117,14 @@ class PhotosCollectionViewController: UIViewController,MKMapViewDelegate,NSFetch
     
     func executeSearch(){
         
-        if let fc = fetchedResultsController{
+        if let fc = fetchResultsController{
             do{
                 try fc.performFetch()
             }
             catch let e as NSError{
-                print("Error while performing a search: \n \(e) \n \(fetchedResultsController)")
+                print("Error while performing a search: \n \(e) \n \(fetchResultsController)")
                 DispatchQueue.main.async {
-                    self.alert.displayAlertView(viewController: self, alertTitle: "Error in executeSearch()", alertMessage: "Error while performing a search: \n \(e) \n \(self.fetchedResultsController)")
+                    self.alert.displayAlertView(viewController: self, alertTitle: "Error in executeSearch()", alertMessage: "Error while performing a search: \n \(e) \n \(self.fetchResultsController)")
                 }
             }
         }
@@ -135,8 +132,17 @@ class PhotosCollectionViewController: UIViewController,MKMapViewDelegate,NSFetch
     
     @IBAction func newCollectionPressed(_ sender: Any) {
         self.deleteAllImages()
+        var flag = 0
         
-        Flickr.shareInstance().getPhotosWithPages(location: location, withPageNumber: 1){(success,error) in
+        if count == 1{
+            flag = 1
+            count += 1
+        }
+        else{
+            flag += 1
+        }
+        
+        Flickr.shareInstance().getPhotosWithPages(location: location, withPageNumber: flag){(success,error) in
             
             if !success{
                 DispatchQueue.main.async {
@@ -146,8 +152,8 @@ class PhotosCollectionViewController: UIViewController,MKMapViewDelegate,NSFetch
             else{
                 
                 DispatchQueue.main.async {
-                    self.getFetchResults()
-                    if let fc = self.fetchedResultsController{
+//                    self.getFetchResults()
+                    if let fc = self.fetchResultsController{
                         self.photoCollectionView.reloadData()
                     }
                     else{
@@ -160,20 +166,11 @@ class PhotosCollectionViewController: UIViewController,MKMapViewDelegate,NSFetch
             }
         }
     }
-    
-    func showAlertViewToDeleteCell(indexPath:NSIndexPath){
-        let alert = UIAlertController(title:"Do you want to delete the image", message: nil, preferredStyle: UIAlertControllerStyle.alert)
-        alert.addAction(UIAlertAction(title: "Cancel", style:UIAlertActionStyle.cancel, handler: nil))
-        alert.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.default){(action: UIAlertAction!) in
-            self.photoCollectionView.deleteItems(at: [indexPath as IndexPath])
-            self.photoCollectionView.reloadData()
-        })
-        self.present(alert, animated: true, completion: nil)
-    }
+
     
     //ColletionView Delegate and DataSource
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        if let fc = fetchedResultsController{
+        if let fc = fetchResultsController{
             return (fc.sections?.count)!
         }
         else{
@@ -182,7 +179,8 @@ class PhotosCollectionViewController: UIViewController,MKMapViewDelegate,NSFetch
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        if let fc = fetchedResultsController{
+        if let fc = fetchResultsController{
+            print(fc.sections![section].numberOfObjects)
             return fc.sections![section].numberOfObjects
         }
         else{
@@ -190,121 +188,187 @@ class PhotosCollectionViewController: UIViewController,MKMapViewDelegate,NSFetch
         }
     }
     
+    
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PhotosCollectionCell", for: indexPath) as! PhotosCollectionViewCell
-        cell.loadingView.startAnimating()
-        cell.loadingView.isHidden = false
-        cell.imageView.backgroundColor = UIColor.lightGray
-        let photo = fetchedResultsController?.object(at: indexPath) as! Photo
-        print(fetchedResultsController?.object(at: indexPath) as! Photo)
-        if photo.imageData != nil{
-            DispatchQueue.main.async {
-
-            cell.loadingView.stopAnimating()
-            cell.loadingView.isHidden = true
-            cell.imageView.image = UIImage(data: photo.imageData as! Data)
-            cell.imageName = photo.name
-            }
-        }
-        else{
-            Flickr.shareInstance().downloadImageFromImageURL(imagePath: photo.urlString!){(success,data,error) in
-                    
-                    if success{
-                        DispatchQueue.main.async {
-                            
-                            cell.loadingView.stopAnimating()
-                            cell.loadingView.isHidden = true
-                            cell.imageView.image = UIImage(data: data!)
-                            cell.imageName = photo.name
-                            photo.imageData = data as NSData?
-                            print(photo.name)
-                        }
-                    }
-                    else{
-                        
-                    }
-                }
-        }
-        print(indexPath)
+        configureCell(cell: cell, atIndexPath: indexPath)
         return cell
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        if collectionView.cellForItem(at: indexPath) != nil{
-            let cell = collectionView.cellForItem(at: indexPath)
-            
-            if let index = selectedIndices.index(of: indexPath){
-                selectedIndices.remove(at: index)
-            }
-            else{
-                selectedIndices.append(indexPath)
-            }
-            
-            if selectedIndices.isEmpty{
-                self.deleteAllImages()
-            }
-            else{
-                var photos = [Photo]()
-                
-                for indexPath in selectedIndices{
-                    photos.append(fetchedResultsController?.object(at: indexPath) as! Photo)
-                }
-                
-                for photo in photos{
-                    self.stack.context.delete(photo)
-                }
-            }
+        
+        let cell = collectionView.cellForItem(at: indexPath)
+        let cellPhoto = fetchResultsController?.object(at: indexPath) as! Photo
+        
+        if let index = selectedIndices.index(of: indexPath){
+            selectedIndices.remove(at: index)
         }
         else{
-            //ShowAlert
+            selectedIndices.append(indexPath)
         }
+        
+        let alert = UIAlertController(title:"Virtual Tourist", message: "Do you want to delete this cell?", preferredStyle: UIAlertControllerStyle.alert)
+        alert.addAction(UIAlertAction(title: "Cancel", style:.cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: "OK", style:.default, handler:{(action: UIAlertAction!) in
+            
+            
+            }))
+            self.present(alert, animated: true, completion: nil)
+        
+    }
+    
+    func configureCell(cell: PhotosCollectionViewCell, atIndexPath indexPath: IndexPath){
+        
+        let cellPhoto = fetchResultsController?.object(at: indexPath) as! Photo
+        
+        cell.imageName = cellPhoto.name
+        cell.loadingView.startAnimating()
+        if cellPhoto.imageData == nil{
+          if cellPhoto.urlString != nil{
+            Flickr.shareInstance().downloadImageFromImageURL(imagePath: cellPhoto.urlString!){(success,data,error) in
+            
+                if error != nil{
+                    DispatchQueue.main.async {
+                        self.alert.displayAlertView(viewController: self, alertTitle: "Error while downloading imageData", alertMessage: (error?.localizedDescription)!)
+                    }
+                }
+                else{
+                    cell.imageView.image = UIImage(data: data!)
+                    cell.loadingView.stopAnimating()
+                    cellPhoto.imageData = data as NSData?
+                    self.stack.save()
+                }
+            }
+          }else{
+            DispatchQueue.main.async {
+                self.alert.displayAlertView(viewController: self, alertTitle: "No image", alertMessage: "ImageUrl is nil,try again?")
+            }
+          }
+        }
+        else{
+            cell.imageView.image = UIImage(data: cellPhoto.imageData as! Data)
+            cell.loadingView.stopAnimating()
+        }
+        
+//        DispatchQueue.main.async {
+//            self.photoCollectionView.reloadItems(at: [indexPath])
+//        }
     }
     
     func deleteAllImages(){
-        for photo in (fetchedResultsController?.fetchedObjects)!{
-            self.stack.context.delete(photo as! NSManagedObject)
+        for photo in (self.fetchResultsController?.fetchedObjects)!{
+            self.stack.context.delete(photo as! Photo)
+            self.stack.save()
+        }
+    }
+    
+    func deleteSelectedImages(){
+        if self.selectedIndices.isEmpty{
+            self.deleteAllImages()
+        }
+        else{
+            var photos = [Photo]()
+            
+            for indexPath in self.selectedIndices{
+                photos.append(self.fetchResultsController?.object(at: indexPath) as! Photo)
+            }
+            for photo in photos{
+                self.stack.context.delete(photo)
+                print("Deleted the coressponding photo")
+                self.stack.save()
+            }
         }
     }
     
     //NSFetchedResultsController
     func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
-        insertedPaths = [IndexPath]()
-        deletedPaths = [IndexPath]()
-        updatedPaths = [IndexPath]()
+//        insertedPaths = [IndexPath]()
+//        deletedPaths = [IndexPath]()
+//        updatedPaths = [IndexPath]()
+        reloadCollectionView = false
+        blockOperations.removeAll(keepingCapacity: true)
+    }
+    
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange sectionInfo: NSFetchedResultsSectionInfo, atSectionIndex sectionIndex: Int, for type: NSFetchedResultsChangeType) {
+        switch (type) {
+        case .insert:
+            self.blockOperations.append(BlockOperation(block: {[weak self] in
+                
+                if let this = self{
+                    this.photoCollectionView.insertSections(NSIndexSet(index: sectionIndex) as IndexSet)
+                }
+            }))
+        case .delete:
+            self.blockOperations.append(BlockOperation(block: {[weak self] in
+                
+                if let this = self{
+                    this.photoCollectionView.deleteSections(NSIndexSet(index: sectionIndex) as IndexSet)
+                }
+            }))
+        case .update:
+            self.blockOperations.append(BlockOperation(block: {[weak self] in
+                
+                if let this = self{
+                    this.photoCollectionView.reloadSections(NSIndexSet(index: sectionIndex) as IndexSet)
+                }
+            }))
+        case .move:
+            print("This is not required")
+            break
+        }
     }
     
     func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
         
         switch(type) {
         case .insert:
-            insertedPaths.append(newIndexPath!)
+            self.blockOperations.append(BlockOperation(block: {[weak self] in
+                
+                if let this = self{
+                    this.photoCollectionView.insertItems(at: [newIndexPath!])
+                }
+            }))
+
+//            self.insertedPaths.append(newIndexPath!)
         case .delete:
-            deletedPaths.append(indexPath!)
+            self.blockOperations.append(BlockOperation(block: {[weak self] in
+                
+                if let this = self{
+                    this.photoCollectionView.deleteItems(at: [indexPath!])
+                }
+            }))
+//            self.deletedPaths.append(indexPath!)
         case .update:
-            updatedPaths.append(indexPath!)
-        default:
-            return
+            self.blockOperations.append(BlockOperation(block: {[weak self] in
+                
+                if let this = self{
+                    this.photoCollectionView.reloadItems(at: [indexPath!])
+                }
+            }))
+//            self.updatedPaths.append(indexPath!)
+        case .move:
+            print("this is not required")
+            break
         }
     }
     
     func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
-        
-        DispatchQueue.global(qos: .background).async {
-    
-           self.stack.performBackgroundBatchOperation(){(workerContext) in
-         
-            for indexPath in self.insertedPaths{
-                self.photoCollectionView.insertItems(at: [indexPath])
-            }
-            for indexPath in self.deletedPaths{
-                self.photoCollectionView.deleteItems(at: [indexPath])
-            }
-            
-            for indexPath in self.updatedPaths{
-                self.photoCollectionView.reloadItems(at: [indexPath])
-            }
+
+        if reloadCollectionView{
+            photoCollectionView.reloadData()
         }
-      }
+        else{
+            photoCollectionView.performBatchUpdates({() -> Void in
+                for operation in self.blockOperations{
+                    operation.start()
+                }
+            }, completion: {(done) in
+            
+                self.blockOperations.removeAll(keepingCapacity: false)
+            })
+
+        }
     }
+
 
 }

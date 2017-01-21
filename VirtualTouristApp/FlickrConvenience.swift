@@ -14,7 +14,7 @@ extension Flickr{
     
     public func getPhotosWithPages(location: Location,withPageNumber:Int, getPhotosWithPagescompletionHandler: @escaping(_ success: Bool,_ error: NSError?) -> Void){
         
-        let pageNum = withPageNumber + 1
+        let pageNum = withPageNumber
         var methodParams:[String:AnyObject] = [Constants.FlickrParameterKeys.Method: Constants.FlickrParameterValues.SearchMethod as AnyObject,
                                                Constants.FlickrParameterKeys.ApiKey: Constants.FlickrParameterValues.ApiKeyValue as AnyObject,
                                                Constants.FlickrParameterKeys.BoundingBox: self.bboxString(latitude: location.latitude, longitude: location.longitude) as AnyObject,
@@ -51,15 +51,15 @@ extension Flickr{
                     return
                 }
                 print(perPage)
-                let pageLimit = min(perPage,40)
-                if pageNum <= pageLimit{
+//                let pageLimit = min(totalPages,40)
+//                if pageNum <= pageLimit{
                     methodParams[Constants.FlickrParameterKeys.Page] = pageNum as AnyObject?
-                    methodParams[Constants.FlickrResponseKeys.Perpage] = 20 as AnyObject?
+//                    methodParams[Constants.FlickrResponseKeys.Perpage] = 20 as AnyObject?
                     self.getPhotosWithPageNumber(methodParams,location:location,getPhotosWithPageNumberCompletionHandler: getPhotosWithPagescompletionHandler)
-                }
-                else{
-                    getPhotosWithPagescompletionHandler(false,NSError(domain:"getPhotoswithPages",code:1,userInfo:[NSLocalizedDescriptionKey:"Exceeded PageLimit"]))
-                }
+//                }
+//                else{
+//                    getPhotosWithPagescompletionHandler(false,NSError(domain:"getPhotoswithPages",code:1,userInfo:[NSLocalizedDescriptionKey:"Exceeded PageLimit"]))
+//                }
                 
             }
             else{
@@ -109,8 +109,10 @@ extension Flickr{
                     print(photosArray.count)
                     let stack = (UIApplication.shared.delegate as! AppDelegate).stack
                     
+                    if photosArray.count > 20{
                     let photoArray = photosArray[0..<20]
                     print(photoArray.count)
+                    var count = 1
                     for eachPhoto in photoArray{
                             let photoTitle = eachPhoto[Constants.FlickrResponseKeys.Title] as? String
                             
@@ -119,38 +121,26 @@ extension Flickr{
                                 getPhotosWithPageNumberCompletionHandler(false,NSError(domain: "getPhotosWithPageNumber",code: 1,userInfo:[NSLocalizedDescriptionKey:"Could not find the key \(Constants.FlickrResponseKeys.MediumURL)"]))
                                 return
                             }
-                                let photo = Photo(imageName: photoTitle!,imageURLString: mediumURL, context:stack.context)
-                                photo.location = location
-                                print(photo.location)
-                                print(photo)
-                                stack.save()
-                                getPhotosWithPageNumberCompletionHandler(true,nil)
-                                
+//                        DispatchQueue.main.async {
+                        stack.context.perform {
+                            
+                            let photo = Photo(imageName: photoTitle!,imageURLString: mediumURL, context:stack.context)
+                            print(count)
+                            count += 1
+                            photo.location = location
+                            print(photo.location)
+                            print(photo)
+                            stack.save()
+                        }
                     }
+                    getPhotosWithPageNumberCompletionHandler(true,nil)
+                    }
+
                 }
             }
             else{
                 
                 getPhotosWithPageNumberCompletionHandler(false,NSError(domain: "getPhotosWithPageNumber",code: 1,userInfo:[NSLocalizedDescriptionKey:"Data found as nil!"]))
-            }
-        }
-        
-    }
-    
-    func getImageData(selectedLocation: Location,completionHandlerForGetImageData: @escaping(_ success:Bool,_ error:NSError?) -> Void){
-        
-        for photo in selectedLocation.photos!{
-            let eachPic = photo as! Photo
-            
-            downloadImageFromImageURL(imagePath: eachPic.urlString!){(success,imageData,error) in
-                
-                if error == nil{
-                    eachPic.imageData = imageData as NSData?
-                    completionHandlerForGetImageData(true,nil)
-                }
-                else{
-                    completionHandlerForGetImageData(false,NSError(domain:"getImageData",code: 1,userInfo:[NSLocalizedDescriptionKey: "Could not get the imageData"]))
-                }
             }
         }
         
@@ -174,7 +164,6 @@ extension Flickr{
     }
     
     private func bboxString(latitude: Double!,longitude:Double!) -> String {
-        // ensure bbox is bounded by minimum and maximum
         if let lat = latitude, let lon = longitude {
             let minimumLon = max(lon - Constants.Flickr.searchBoxHalfWidth, Constants.Flickr.searchLonRange.0)
             let minimumLat = max(lat - Constants.Flickr.searchBoxHalfHeight, Constants.Flickr.searchLatRange.0)

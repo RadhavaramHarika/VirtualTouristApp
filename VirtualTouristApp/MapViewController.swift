@@ -20,13 +20,11 @@ class MapViewController: UIViewController,MKMapViewDelegate,NSFetchedResultsCont
     
     var fetchedResultsController : NSFetchedResultsController<NSFetchRequestResult>? {
         didSet {
-            // Whenever the frc changes, we execute the search and
             fetchedResultsController?.delegate = self
             let fr = NSFetchRequest<NSFetchRequestResult>(entityName: "Location")
             fr.sortDescriptors = [NSSortDescriptor(key: "latitude", ascending: true),
                                   NSSortDescriptor(key: "longitude", ascending: true)]
             
-            // Create the FetchedResultsController
             fetchedResultsController = NSFetchedResultsController(fetchRequest: fr, managedObjectContext: stack.context, sectionNameKeyPath: nil, cacheName: nil)
             executeSearch()
             self.configure()
@@ -38,7 +36,7 @@ class MapViewController: UIViewController,MKMapViewDelegate,NSFetchedResultsCont
         
         self.savedRegion()
         self.navigationController?.navigationBar.isHidden = true
-        self.mainMapView.delegate = self
+        mainMapView.delegate = self
         let longPressGesture = UILongPressGestureRecognizer(target: self,action:#selector(longPressRecognizer(gestureRecognizer:)))
         longPressGesture.minimumPressDuration = 0.5
         mainMapView.addGestureRecognizer(longPressGesture)
@@ -47,7 +45,6 @@ class MapViewController: UIViewController,MKMapViewDelegate,NSFetchedResultsCont
         fr.sortDescriptors = [NSSortDescriptor(key: "latitude", ascending: true),
                               NSSortDescriptor(key: "longitude", ascending: true)]
         
-        // Create the FetchedResultsController
         fetchedResultsController?.delegate = self
         fetchedResultsController = NSFetchedResultsController(fetchRequest: fr, managedObjectContext: stack.context, sectionNameKeyPath: nil, cacheName: nil)
     }
@@ -78,15 +75,13 @@ class MapViewController: UIViewController,MKMapViewDelegate,NSFetchedResultsCont
         
         let touchPoint:CGPoint = gestureRecognizer.location(in: mainMapView)
         let annotationCoordinate : CLLocationCoordinate2D = mainMapView.convert(touchPoint, toCoordinateFrom: mainMapView)
-        let location = CLLocation(latitude: annotationCoordinate.latitude,longitude: annotationCoordinate.longitude)
-        var locationName = String()
         
         DispatchQueue.main.async {
             
             switch gestureRecognizer.state {
             case .began:
                 let annotation = Location(latitude: annotationCoordinate.latitude, longitude: annotationCoordinate.longitude,context: self.stack.context)
-                Flickr.shareInstance().getPhotosWithPages(location: annotation, withPageNumber: 0){(success,error) in
+                Flickr.shareInstance().getPhotosWithPages(location: annotation, withPageNumber: 1){(success,error) in
                     
                     if !success{
                         DispatchQueue.main.async {
@@ -172,18 +167,27 @@ class MapViewController: UIViewController,MKMapViewDelegate,NSFetchedResultsCont
                         }
                     }
                     
-                    self.fetchedResultsController?.delegate = nil
                     let photoAlbumVC = self.storyboard?.instantiateViewController(withIdentifier: "PhotosCollectionVC") as! PhotosCollectionViewController
-                    let fr = NSFetchRequest<NSFetchRequestResult>(entityName: "Photo")
-                    
-                    fr.sortDescriptors = [NSSortDescriptor(key: "name", ascending: false),NSSortDescriptor(key: "urlString", ascending: true),NSSortDescriptor(key: "imageData", ascending: true)]
-                    
-                    let pred = NSPredicate(format: "location = %@", argumentArray: [locationPoint])
-                    fr.predicate = pred
-                    let fetchController = NSFetchedResultsController(fetchRequest: fr, managedObjectContext:self.fetchedResultsController!.managedObjectContext, sectionNameKeyPath: nil, cacheName: nil)
-                    photoAlbumVC.fetchedResultsController = fetchController
-                    photoAlbumVC.location = locationPoint
+                    for pin in self.savedPins{
+                        if pin == locationPoint{
+                            photoAlbumVC.location = pin
+                            print(photoAlbumVC.location)
+                        }
+                        else{
+                            photoAlbumVC.location = locationPoint
+                            print(photoAlbumVC.location)
+                        }
+                    }
+//                    let fr = NSFetchRequest<NSFetchRequestResult>(entityName: "Photo")
+//                    
+//                    fr.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true),NSSortDescriptor(key: "urlString", ascending: true),NSSortDescriptor(key: "imageData", ascending: true)]
+//                    
+//                    let pred = NSPredicate(format: "location = %@", argumentArray: [locationPoint])
+//                    fr.predicate = pred
+//                    let fetchController = NSFetchedResultsController(fetchRequest: fr, managedObjectContext:self.fetchedResultsController!.managedObjectContext, sectionNameKeyPath: nil, cacheName: nil)
+//                    photoAlbumVC.fetchedResultsController = fetchController
                     photoAlbumVC.placeName = locationName
+                    photoAlbumVC.count = 1
                     self.navigationController?.pushViewController(photoAlbumVC, animated: true)
                 }
             }
