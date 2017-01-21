@@ -42,7 +42,6 @@ class PhotosCollectionViewController: UIViewController,MKMapViewDelegate,NSFetch
             // Create the FetchedResultsController
             fetchResultsController = NSFetchedResultsController(fetchRequest: fr, managedObjectContext: stack.context, sectionNameKeyPath: nil, cacheName: nil)
             executeSearch()
-            setPhotosArray()
         }
     }
     
@@ -64,11 +63,6 @@ class PhotosCollectionViewController: UIViewController,MKMapViewDelegate,NSFetch
         
         setUpMapView()
         setUpFlowLayout()
-    }
-    
-    func setPhotosArray(){
-        let fetchedObjects = self.fetchResultsController?.fetchedObjects as! [Photo]
-        print(fetchedObjects.count)
         photoCollectionView.reloadData()
     }
     
@@ -245,6 +239,10 @@ class PhotosCollectionViewController: UIViewController,MKMapViewDelegate,NSFetch
                     cell.loadingView.isHidden = true
                     cellPhoto.imageData = data as NSData?
                     self.stack.save()
+                    
+                    DispatchQueue.main.async {
+                        self.photoCollectionView.reloadItems(at: [indexPath])
+                    }
                 }
             }
           }else{
@@ -259,9 +257,7 @@ class PhotosCollectionViewController: UIViewController,MKMapViewDelegate,NSFetch
             cell.loadingView.isHidden = true
         }
         
-//        DispatchQueue.main.async {
-//            self.photoCollectionView.reloadItems(at: [indexPath])
-//        }
+       
     }
     
     func deleteAllImages(){

@@ -96,8 +96,8 @@
                                                 <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="zo8-fQ-QGc">
                                                     <rect key="frame" x="0.0" y="0.0" width="89" height="87"/>
                                                 </imageView>
-                                                <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="gray" translatesAutoresizingMaskIntoConstraints="NO" id="sBs-HZ-tHf">
-                                                    <rect key="frame" x="34" y="33" width="20" height="20"/>
+                                                <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="white" translatesAutoresizingMaskIntoConstraints="NO" id="sBs-HZ-tHf">
+                                                    <rect key="frame" x="35" y="34" width="20" height="20"/>
                                                 </activityIndicatorView>
                                             </subviews>
                                         </view>
